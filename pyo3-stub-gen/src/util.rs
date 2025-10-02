@@ -54,10 +54,10 @@ fn get_globals<'py>(any: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
 }
 
 #[cfg_attr(not(feature = "infer_signature"), allow(unused_variables))]
-#[allow(unused_variables)]
 pub fn fmt_py_obj<T: for<'py> pyo3::IntoPyObjectExt<'py>>(obj: T) -> String {
-    #[cfg(all(feature = "infer_signature", not(feature = "extension-module")))]
+    #[cfg(feature = "infer_signature")]
     {
+        #[cfg(feature = "stub-gen")]
         pyo3::Python::initialize();
         pyo3::Python::attach(|py| {
             if let Ok(any) = obj.into_bound_py_any(py) {
@@ -70,7 +70,7 @@ pub fn fmt_py_obj<T: for<'py> pyo3::IntoPyObjectExt<'py>>(obj: T) -> String {
             "...".to_owned()
         })
     }
-    #[cfg(not(all(feature = "infer_signature", not(feature = "extension-module"))))]
+    #[cfg(not(feature = "infer_signature"))]
     {
         "...".to_owned()
     }
