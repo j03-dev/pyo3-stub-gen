@@ -58,6 +58,7 @@ fn get_globals<'py>(any: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
 pub fn fmt_py_obj<T: for<'py> pyo3::IntoPyObjectExt<'py>>(obj: T) -> String {
     #[cfg(all(feature = "infer_signature", not(feature = "extension-module")))]
     {
+        pyo3::Python::initialize();
         pyo3::Python::attach(|py| {
             if let Ok(any) = obj.into_bound_py_any(py) {
                 if all_builtin_types(&any) || valid_external_repr(&any).is_some_and(|valid| valid) {
