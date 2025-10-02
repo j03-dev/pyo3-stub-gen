@@ -57,17 +57,15 @@ fn get_globals<'py>(any: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
 pub fn fmt_py_obj<T: for<'py> pyo3::IntoPyObjectExt<'py>>(obj: T) -> String {
     #[cfg(feature = "infer_signature")]
     {
-        pyo3::Python::try_attach(|py| {
-            if let Ok(any) = obj.into_bound_py_any(py) {
-                if all_builtin_types(&any) || valid_external_repr(&any).is_some_and(|valid| valid) {
-                    if let Ok(py_str) = any.repr() {
-                        return py_str.to_string();
-                    }
+        let py = unsafe { pyo3::Python::assume_attached() };
+        if let Ok(any) = obj.into_bound_py_any(py) {
+            if all_builtin_types(&any) || valid_external_repr(&any).is_some_and(|valid| valid) {
+                if let Ok(py_str) = any.repr() {
+                    return py_str.to_string();
                 }
             }
-            "...".to_owned()
-        })
-        .unwrap_or("...".to_owned())
+        };
+        "...".to_owned()
     }
     #[cfg(not(feature = "infer_signature"))]
     {
