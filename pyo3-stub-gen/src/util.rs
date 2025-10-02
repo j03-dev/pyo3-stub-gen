@@ -57,7 +57,7 @@ fn get_globals<'py>(any: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
 pub fn fmt_py_obj<T: for<'py> pyo3::IntoPyObjectExt<'py>>(obj: T) -> String {
     #[cfg(feature = "infer_signature")]
     {
-        pyo3::Python::attach(|py| -> String {
+        pyo3::Python::try_attach(|py| {
             if let Ok(any) = obj.into_bound_py_any(py) {
                 if all_builtin_types(&any) || valid_external_repr(&any).is_some_and(|valid| valid) {
                     if let Ok(py_str) = any.repr() {
@@ -67,10 +67,11 @@ pub fn fmt_py_obj<T: for<'py> pyo3::IntoPyObjectExt<'py>>(obj: T) -> String {
             }
             "...".to_owned()
         })
+        .unwrap_or("...".to_owned())
     }
     #[cfg(not(feature = "infer_signature"))]
     {
-        "...".to_owned()
+        Some("...".to_owned())
     }
 }
 
@@ -82,7 +83,7 @@ mod test {
     struct A {}
     #[test]
     fn test_fmt_dict() {
-        pyo3::Python::attach(|py| {
+        pyo3::Python::try_attach(|py| {
             let dict = PyDict::new(py);
             _ = dict.set_item("k1", "v1");
             _ = dict.set_item("k2", 2);
@@ -90,21 +91,21 @@ mod test {
             // class A variable can not be formatted
             _ = dict.set_item("k3", A {});
             assert_eq!("...", fmt_py_obj(dict.as_unbound()));
-        })
+        });
     }
     #[test]
     fn test_fmt_list() {
-        pyo3::Python::attach(|py| {
+        pyo3::Python::try_attach(|py| {
             let list = PyList::new(py, [1, 2]).unwrap();
             assert_eq!("[1, 2]", fmt_py_obj(list.as_unbound()));
             // class A variable can not be formatted
             let list = PyList::new(py, [A {}, A {}]).unwrap();
             assert_eq!("...", fmt_py_obj(list.as_unbound()));
-        })
+        });
     }
     #[test]
     fn test_fmt_tuple() {
-        pyo3::Python::attach(|py| {
+        pyo3::Python::try_attach(|py| {
             let tuple = PyTuple::new(py, [1, 2]).unwrap();
             assert_eq!("(1, 2)", fmt_py_obj(tuple.as_unbound()));
             let tuple = PyTuple::new(py, [1]).unwrap();
@@ -112,7 +113,7 @@ mod test {
             // class A variable can not be formatted
             let tuple = PyTuple::new(py, [A {}]).unwrap();
             assert_eq!("...", fmt_py_obj(tuple.as_unbound()));
-        })
+        });
     }
     #[test]
     fn test_fmt_other() {
