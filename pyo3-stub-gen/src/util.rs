@@ -57,7 +57,7 @@ fn get_globals<'py>(any: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
 pub fn fmt_py_obj<T: for<'py> pyo3::IntoPyObjectExt<'py>>(obj: T) -> String {
     #[cfg(feature = "infer_signature")]
     {
-        #[cfg(feature = "stub-gen")]
+        #[cfg(feature = "manual-python-init")]
         pyo3::Python::initialize();
         pyo3::Python::attach(|py| {
             if let Ok(any) = obj.into_bound_py_any(py) {
