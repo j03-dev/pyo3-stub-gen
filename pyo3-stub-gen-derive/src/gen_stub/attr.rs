@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use indexmap::IndexSet;
 
 use super::{RenamingRule, Signature};
 use proc_macro2::{TokenStream as TokenStream2, TokenTree};
@@ -138,6 +138,7 @@ pub enum Attr {
     Ord,
     Hash,
     Str,
+    Subclass,
 
     // Attributes appears in components within `#[pymethods]`
     // <https://docs.rs/pyo3/latest/pyo3/attr.pymethods.html>
@@ -216,6 +217,9 @@ pub fn parse_pyo3_attr(attr: &Attribute) -> Result<Vec<Attr>> {
                         }
                         if ident == "str" {
                             pyo3_attrs.push(Attr::Str);
+                        }
+                        if ident == "subclass" {
+                            pyo3_attrs.push(Attr::Subclass);
                         }
                         // frozen is required by PyO3 when using hash, but doesn't affect stub generation
                     }
@@ -490,7 +494,7 @@ pub(crate) enum AttributeLocation {
 #[derive(Debug, Clone, PartialEq)]
 pub struct OverrideTypeAttribute {
     pub(crate) type_repr: String,
-    pub(crate) imports: HashSet<String>,
+    pub(crate) imports: IndexSet<String>,
 }
 
 mod kw {
@@ -502,7 +506,7 @@ mod kw {
 impl Parse for OverrideTypeAttribute {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut type_repr = None;
-        let mut imports = HashSet::new();
+        let mut imports = IndexSet::new();
 
         while !input.is_empty() {
             let lookahead = input.lookahead1();
@@ -664,7 +668,7 @@ mod test {
                 *expr,
                 OverrideTypeAttribute {
                     type_repr: "typing.Never".into(),
-                    imports: HashSet::from(["typing".into()])
+                    imports: IndexSet::from(["typing".into()])
                 }
             );
         } else {
@@ -678,7 +682,7 @@ mod test {
                     *expr,
                     OverrideTypeAttribute {
                         type_repr: "collections.abc.Callable[[str]]".into(),
-                        imports: HashSet::from(["collections.abc".into()])
+                        imports: IndexSet::from(["collections.abc".into()])
                     }
                 );
             } else {
