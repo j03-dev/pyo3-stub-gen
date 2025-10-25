@@ -4,11 +4,13 @@ mod custom_exceptions;
 mod manual_submit;
 mod overloading;
 mod overriding;
+mod rust_type_marker;
 
 use custom_exceptions::*;
 use manual_submit::*;
 use overloading::*;
 use overriding::*;
+use rust_type_marker::*;
 
 #[cfg_attr(target_os = "macos", doc = include_str!("../../../README.md"))]
 mod readme {}
@@ -383,6 +385,16 @@ impl HashableStruct {
 #[gen_stub_pyfunction]
 #[pyfunction]
 #[pyo3(signature = (*args))]
+fn func_with_star_arg_typed(
+    #[gen_stub(override_type(type_repr = "str"))] args: &Bound<PyTuple>,
+) -> String {
+    args.to_string()
+}
+
+/// Takes a variable number of arguments and returns their string representation.
+#[gen_stub_pyfunction]
+#[pyfunction]
+#[pyo3(signature = (*args))]
 fn func_with_star_arg(args: &Bound<PyTuple>) -> String {
     args.to_string()
 }
@@ -416,6 +428,11 @@ fn pure(m: &Bound<PyModule>) -> PyResult<()> {
     m.add_class::<ComparableStruct>()?;
     m.add_class::<HashableStruct>()?;
     m.add_class::<DecimalHolder>()?;
+    m.add_class::<DataContainer>()?;
+    m.add_class::<Placeholder>()?;
+    m.add_class::<Calculator>()?;
+    m.add_class::<InstanceValue>()?;
+    m.add_class::<Problem>()?;
     m.add_function(wrap_pyfunction!(sum, m)?)?;
     m.add_function(wrap_pyfunction!(create_dict, m)?)?;
     m.add_function(wrap_pyfunction!(read_dict, m)?)?;
@@ -432,9 +449,14 @@ fn pure(m: &Bound<PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(fn_with_python_stub, m)?)?;
     m.add_function(wrap_pyfunction!(overload_example_1, m)?)?;
     m.add_function(wrap_pyfunction!(overload_example_2, m)?)?;
+    m.add_function(wrap_pyfunction!(as_tuple, m)?)?;
     m.add_function(wrap_pyfunction!(add_decimals, m)?)?;
+    m.add_function(wrap_pyfunction!(process_container, m)?)?;
+    m.add_function(wrap_pyfunction!(sum_list, m)?)?;
+    m.add_function(wrap_pyfunction!(create_containers, m)?)?;
     // Test-cases for `*args` and `**kwargs`
     m.add_function(wrap_pyfunction!(func_with_star_arg, m)?)?;
+    m.add_function(wrap_pyfunction!(func_with_star_arg_typed, m)?)?;
     m.add_function(wrap_pyfunction!(func_with_kwargs, m)?)?;
 
     // Test cases for type: ignore functionality
